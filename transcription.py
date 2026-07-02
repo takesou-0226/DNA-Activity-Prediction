@@ -42,3 +42,4 @@ y_test_pred = gs.predict(X_test)
 r2_test = r2_score(y_true=y_test, y_pred=y_test_pred)
 print(f"r2score...{r2_test}")
 
+a = 0
