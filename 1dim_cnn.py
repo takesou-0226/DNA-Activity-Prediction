@@ -54,5 +54,6 @@ test_loader = DataLoader(
     batch_size=64
 )
 
-class CNNRegressor(nn.Module):
+'''class CNNRegressor(nn.Module):
     def __init__(self):
+'''
