@@ -54,6 +54,33 @@ test_loader = DataLoader(
     batch_size=64
 )
 
-'''class CNNRegressor(nn.Module):
+class CNNRegressor(nn.Module):
     def __init__(self):
-'''
+        super().__init__()
+        self.feartures = nn.Sequential(
+            nn.Conv1d(in_channels=4, out_channels=32, kernel_size=7, padding=3),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=5, padding=2),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+            #Maxpoolで減らしたものを平均化して次元を減らす
+            nn.AdaptiveAvgPool1d(1)
+        )
+        self.fc = nn.Linear(64, 1)
+    def forward(self, x):
+        x = self.feartures(x)
+        x = x.squeeze(-1)
+        x = self.fc(x)
+        return x
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model = CNNRegressor().to(device)
+
+criterion = nn.MSELoss()
+
+optimizer = torch.optim.Adam(
+    model.parameters(),
+    lr=0.001
+)
