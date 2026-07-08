@@ -55,45 +55,53 @@ test_loader = DataLoader(
     batch_size=64
 )
 
-class CNNRegressor(nn.Module):
+class MultiScaleCNN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.feartures = nn.Sequential(
-            nn.Conv1d(in_channels=4, out_channels=32, kernel_size=7, padding=3),
+        self.conv3 = nn.Sequential(
+            nn.Conv1d(4, 32, kernel_size=3, padding=1),
             nn.BatchNorm1d(32),
-            nn.ReLU(),
-            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=5, padding=2),
-            nn.BatchNorm1d(64),
-            nn.ReLU(),
-            #Maxpoolで減らしたものを平均化して次元を減らす
-            nn.AdaptiveAvgPool1d(1)
+            nn.ReLU()
         )
-        self.fc = nn.Linear(64, 1)
+        self.conv5 = nn.Sequential(
+            nn.Conv1d(4, 32, kernel_size=5, padding=2),
+            nn.BatchNorm1d(32),
+            nn.ReLU()
+        )
+        self.conv7 = nn.Sequential(
+            nn.Conv1d(4, 32, kernel_size=7, padding=3),
+            nn.BatchNorm1d(32),
+            nn.ReLU()
+        )
+        self.gap = nn.AdaptiveAvgPool1d(1)
+        self.dropout = nn.Dropout(0.3)
+        self.fc = nn.Linear(96, 1)
     def forward(self, x):
-        x = self.feartures(x)
-        x = x.squeeze(-1)
+        x3 = self.conv3(x)
+        x5 = self.conv5(x)
+        x7 = self.conv7(x)
+
+        x3 = self.gap(x3).squeeze(-1)
+        x5 = self.gap(x5).squeeze(-1)
+        x7 = self.gap(x7).squeeze(-1)
+
+        x = torch.cat([x3, x5, x7], dim=1)
+        x = self.dropout(x)
         x = self.fc(x)
         return x
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model = CNNRegressor().to(device)
+model = MultiScaleCNN().to(device)
 
-criterion = nn.HuberLoss(delta=0.5)
+criterion = nn.MSELoss()
 
-'''optimizer = torch.optim.Adam(
+optimizer = torch.optim.Adam(
     model.parameters(),
-    lr=0.05
-)
-'''
-
-optimizer = torch.optim.AdamW(
-    model.parameters(),
-    lr=3e-4,
-    weight_decay=1e-4
+    lr=0.075
 )
 
-epochs = 50
+epochs = 30
 
 for epoch in range(epochs):
     model.train()
@@ -128,3 +136,4 @@ predictions = np.array(predictions).flatten()
 answers = np.array(answers).flatten()
 
 print(f"r2 = {r2_score(answers, predictions)}")
+
