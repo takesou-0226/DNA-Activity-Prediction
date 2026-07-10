@@ -59,23 +59,23 @@ class MultiScaleCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv3 = nn.Sequential(
-            nn.Conv1d(4, 32, kernel_size=3, padding=1),
-            nn.BatchNorm1d(32),
+            nn.Conv1d(4, 64, kernel_size=3, padding=1),
+            nn.BatchNorm1d(64),
             nn.ReLU()
         )
         self.conv5 = nn.Sequential(
-            nn.Conv1d(4, 32, kernel_size=5, padding=2),
-            nn.BatchNorm1d(32),
+            nn.Conv1d(4, 96, kernel_size=5, padding=2),
+            nn.BatchNorm1d(96),
             nn.ReLU()
         )
         self.conv7 = nn.Sequential(
-            nn.Conv1d(4, 32, kernel_size=7, padding=3),
-            nn.BatchNorm1d(32),
+            nn.Conv1d(4, 128, kernel_size=7, padding=3),
+            nn.BatchNorm1d(128),
             nn.ReLU()
         )
-        self.gap = nn.AdaptiveAvgPool1d(1)
+        self.gap = nn.AdaptiveMaxPool1d(1)
         self.dropout = nn.Dropout(0.3)
-        self.fc = nn.Linear(96, 1)
+        self.fc = nn.Linear(288, 1)
     def forward(self, x):
         x3 = self.conv3(x)
         x5 = self.conv5(x)
@@ -98,10 +98,10 @@ criterion = nn.MSELoss()
 
 optimizer = torch.optim.Adam(
     model.parameters(),
-    lr=0.075
+    lr=0.001
 )
 
-epochs = 30
+epochs = 150
 
 for epoch in range(epochs):
     model.train()

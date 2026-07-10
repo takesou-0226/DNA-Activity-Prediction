@@ -66,6 +66,7 @@ class CNNRegressor(nn.Module):
             nn.BatchNorm1d(64),
             nn.ReLU(),
             #Maxpoolで減らしたものを平均化して次元を減らす
+            nn.Dropout1d(0.3),
             nn.AdaptiveAvgPool1d(1)
         )
         self.fc = nn.Linear(64, 1)
@@ -79,8 +80,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = CNNRegressor().to(device)
 
-criterion = nn.HuberLoss(delta=0.5)
-
+criterion = nn.MSELoss()
 '''optimizer = torch.optim.Adam(
     model.parameters(),
     lr=0.05
@@ -89,11 +89,11 @@ criterion = nn.HuberLoss(delta=0.5)
 
 optimizer = torch.optim.AdamW(
     model.parameters(),
-    lr=3e-4,
+    lr=0.001,
     weight_decay=1e-4
 )
 
-epochs = 50
+epochs = 100
 
 for epoch in range(epochs):
     model.train()

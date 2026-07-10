@@ -29,7 +29,7 @@ seed = 42
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, shuffle=True, random_state=seed)
 
 model = RandomForestRegressor()
-param_grid = {'n_estimators':[10, 20, 50, 100]}
+param_grid = {'n_estimators':[1000]}
 cv = KFold(n_splits=5, shuffle=True, random_state=seed)
 gs = GridSearchCV(estimator=model, param_grid=param_grid, cv=cv, scoring='r2')
 
