@@ -5,10 +5,12 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 from torch.utils.data import DataLoader, Dataset
+import matplotlib.pyplot as plt
 
 df = pd.read_csv("kadai1_data.csv")
 
 MaxLen = df["sequence"].str.len().max()
+
 Base2Index = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
 
 def onehot_encoding(s):
@@ -64,8 +66,8 @@ class MultiScaleCNN(nn.Module):
             nn.ReLU()
         )
         self.conv5 = nn.Sequential(
-            nn.Conv1d(4, 96, kernel_size=5, padding=2),
-            nn.BatchNorm1d(96),
+            nn.Conv1d(4, 64, kernel_size=5, padding=2),
+            nn.BatchNorm1d(64),
             nn.ReLU()
         )
         self.conv7 = nn.Sequential(
@@ -73,17 +75,17 @@ class MultiScaleCNN(nn.Module):
             nn.BatchNorm1d(128),
             nn.ReLU()
         )
-        self.gap = nn.AdaptiveMaxPool1d(1)
+        self.gap = nn.AdaptiveMaxPool1d(2)
         self.dropout = nn.Dropout(0.3)
-        self.fc = nn.Linear(288, 1)
+        self.fc = nn.Linear(512, 1)
     def forward(self, x):
         x3 = self.conv3(x)
         x5 = self.conv5(x)
         x7 = self.conv7(x)
 
-        x3 = self.gap(x3).squeeze(-1)
-        x5 = self.gap(x5).squeeze(-1)
-        x7 = self.gap(x7).squeeze(-1)
+        x3 = self.gap(x3).flatten(1)
+        x5 = self.gap(x5).flatten(1)
+        x7 = self.gap(x7).flatten(1)
 
         x = torch.cat([x3, x5, x7], dim=1)
         x = self.dropout(x)
@@ -98,11 +100,10 @@ criterion = nn.MSELoss()
 
 optimizer = torch.optim.Adam(
     model.parameters(),
-    lr=0.001
-)
+    lr=0.001)
 
-epochs = 150
-
+epochs = 100
+loss_his = []
 for epoch in range(epochs):
     model.train()
     total_loss = 0
@@ -115,12 +116,11 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
+        avg_loss = total_loss / len(train_loader)
     print(
         f"Epoch {epoch+1}/{epochs}  Loss={total_loss:.4f}"
     )
-
-model.eval()
-
+    loss_his.append(avg_loss)
 predictions = []
 answers = []
 
@@ -137,3 +137,10 @@ answers = np.array(answers).flatten()
 
 print(f"r2 = {r2_score(answers, predictions)}")
 
+plt.figure(figsize=(8,5))
+plt.plot(range(1, epochs+1), loss_his)
+plt.xlabel("Epoch")
+plt.ylabel("Training Loss")
+plt.title("Training Loss Curve")
+plt.grid(True)
+plt.show()
